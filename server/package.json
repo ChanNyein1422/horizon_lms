@@ -17,7 +17,8 @@
     "joi": "^17.7.0",
     "joi-objectid": "^4.0.2",
     "moment": "^2.29.4",
-    "mongoose": "^6.7.2"
+    "mongoose": "^6.7.2",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"

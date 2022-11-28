@@ -1,77 +1,91 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+
+var storage = multer.diskStorage({
+    destination: "./files/",
+    filename: function (req, file, cb) {
+        const fileName = Date.now() + "_" + file.originalname;
+        req.body.file = fileName;
+        cb(null, fileName);
+    },
+});
+const upload = multer({ storage });
 
 const { authenticate, authorizeAdmin } = require("./middlewares.js");
 const {
-  registerUser,
-  loginUser,
-  deleteUser,
-  getAllUsers,
-  getOneUser,
-  updateUser,
+    registerUser,
+    loginUser,
+    deleteUser,
+    getAllUsers,
+    getOneUser,
+    updateUser,
 } = require("./controllers/users.controller");
 const {
-  createCourseCategory,
-  getAllCategories,
-  deleteCourseCategory,
-  updateCourseCategory,
-  getOneCategory,
+    createCourseCategory,
+    getAllCategories,
+    deleteCourseCategory,
+    updateCourseCategory,
+    getOneCategory,
 } = require("./controllers/course_categories.controllers");
 
 const {
-  createCourse,
-  getCourses,
-  deleteCourse,
-  updateCourse,
-  findOneCourse,
+    createCourse,
+    getCourses,
+    deleteCourse,
+    updateCourse,
+    findOneCourse,
 } = require("./controllers/courses.controllers");
 
 const {
-  createMaterial,
-  getMaterials,
-  deleteMaterial,
-  findOneMaterial,
-  updateMaterial,
+    createMaterial,
+    getMaterials,
+    deleteMaterial,
+    findOneMaterial,
+    updateMaterial,
 } = require("./controllers/materials.controller");
 
 const {
-  createAssignment,
-  deleteAssignment,
-  getAssignment,
-  findOneAssignment,
-  updateAssignment,
+    createAssignment,
+    deleteAssignment,
+    getAssignment,
+    findOneAssignment,
+    updateAssignment,
 } = require("./controllers/assignments.controller");
 const {
-  submitAssignment,
-  deleteAssignmentUpload,
-  getAssignmentUpload,
-  findOneAssignmentUpload,
-  updateAssignmentUpload,
+    submitAssignment,
+    deleteAssignmentUpload,
+    getAssignmentUpload,
+    findOneAssignmentUpload,
+    updateAssignmentUpload,
 } = require("./controllers/assignment_uploads.controller");
 const {
-  markAsRead,
-  checkProgress,
+    markAsRead,
+    checkProgress,
 } = require("./controllers/progresses.controller");
 
 const {
-  enrollCourse,
-  getEnrolledCourses,
-  leaveCourse,
+    enrollCourse,
+    getEnrolledCourses,
+    leaveCourse,
 } = require("./controllers/course_enrolls.controller");
 
 const app = express();
 
 mongoose.connect(
-  "mongodb+srv://admin:neokim@cluster0.y5mxg0a.mongodb.net/horizondb?retryWrites=true&w=majority"
+    "mongodb+srv://admin:neokim@cluster0.y5mxg0a.mongodb.net/horizondb?retryWrites=true&w=majority"
 );
 mongoose.connection.once("error", (err) => {
-  console.log(err);
+    console.log(err);
 });
 
 app.use(cors());
+app.use("/files", express.static(path.join(__dirname, "/files")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(upload.single("file"));
 
 // Users
 app.get("/api/users/:id", authenticate, getOneUser);
@@ -115,9 +129,9 @@ app.get("/api/assignments_uploads/:id", authenticate, findOneAssignmentUpload);
 app.get("/api/assignments_uploads", authenticate, getAssignmentUpload);
 app.patch("/api/assignments_uploads/:id", authenticate, updateAssignmentUpload);
 app.delete(
-  "/api/assignments_uploads/:id",
-  authenticate,
-  deleteAssignmentUpload
+    "/api/assignments_uploads/:id",
+    authenticate,
+    deleteAssignmentUpload
 );
 app.post("/api/assignments_uploads", authenticate, submitAssignment);
 
@@ -131,9 +145,11 @@ app.get("/api/enroll_courses", authenticate, getEnrolledCourses);
 app.delete("/api/enroll_courses/:id", authenticate, leaveCourse);
 
 app.use((req, res, next, err) => {
-  return res.status(500).send({ code: 500, message: "Internal Server Error" });
+    return res
+        .status(500)
+        .send({ code: 500, message: "Internal Server Error" });
 });
 
 app.listen(5001, () => {
-  console.log("Server started on port 5001");
+    console.log("Server started on port 5001");
 });
