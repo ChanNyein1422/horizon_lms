@@ -1,8 +1,11 @@
 const CourseCategoryModel = require("../models/course_categories.model");
 const Joi = require("joi");
+const CoursesModel = require("../models/courses.model");
 
 async function createCourseCategory(req, res) {
-  const schema = Joi.object({ category: Joi.string().required() });
+  const schema = Joi.object({
+    category: Joi.string().required(),
+  });
   const result = schema.validate(req.body);
   if (result.error) {
     return res.status(400).send({
@@ -22,13 +25,23 @@ async function createCourseCategory(req, res) {
     });
   }
 }
+
 async function getAllCategories(req, res) {
   try {
     const { limit, skip } = req.query;
-
-    const data = await CourseCategoryModel.find({})
+    let data = await CourseCategoryModel.find({})
       .skip(skip ? parseInt(skip) : 0)
-      .limit(limit ? parseInt(limit) : 10);
+      .limit(limit ? parseInt(limit) : 10)
+      .lean();
+
+    data = data.map(async (cat) => {
+      const courseCount = await CoursesModel.find({
+        category: cat._id,
+      }).countDocuments();
+      return { ...cat, courseCount };
+    });
+
+    data = await Promise.all(data);
     const count = await CourseCategoryModel.find({}).countDocuments();
     return res.status(200).send({ data, count });
   } catch (err) {
@@ -44,6 +57,17 @@ async function deleteCourseCategory(req, res) {
     return res.status(204).send();
   } catch (err) {
     return res.status(400).send({
+      message: err.message,
+    });
+  }
+}
+
+async function getOneCategory(req, res) {
+  try {
+    const course = await CourseCategoryModel.findOne({ _id: req.params.id });
+    return res.status(200).send(course);
+  } catch (err) {
+    return res.status(500).send({
       message: err.message,
     });
   }
@@ -73,4 +97,5 @@ module.exports = {
   getAllCategories,
   deleteCourseCategory,
   updateCourseCategory,
+  getOneCategory,
 };
